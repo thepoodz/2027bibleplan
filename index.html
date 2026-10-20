@@ -49,7 +49,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        /* Custom scrollbars and sleek layout styling */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -87,11 +86,11 @@
                     <h1 class="text-lg font-bold tracking-tight text-slate-100 flex items-center gap-2">
                         Bible 2027 <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-medium border border-amber-500/20">Plan</span>
                     </h1>
-                    <p class="text-xs text-slate-400 hidden sm:block">Daily Scripture Tracker</p>
+                    <p class="text-xs text-slate-400 hidden sm:block">Sub-Reading Scripture Tracker</p>
                 </div>
             </div>
 
-            <!-- Sync / Status & Settings Button -->
+            <!-- Sync Status & Settings Button -->
             <div class="flex items-center space-x-2">
                 <span id="syncStatusBadge" class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700/60">
                     <span id="syncDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
@@ -114,22 +113,22 @@
             
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-amber-400/90">Overall Progress</h2>
-                    <p class="text-2xl font-extrabold text-slate-100 mt-0.5" id="statsPercentage">0% <span class="text-xs font-normal text-slate-400">Completed</span></p>
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-amber-400/90">Overall Plan Progress</h2>
+                    <p class="text-2xl font-extrabold text-slate-100 mt-0.5" id="statsPercentage">0% <span class="text-xs font-normal text-slate-400">Chapters / Passages Read</span></p>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3 text-center sm:text-right">
                     <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/40">
-                        <span class="block text-xs text-slate-400">Completed</span>
-                        <span class="text-sm font-bold text-amber-400" id="statsCompleted">0</span>
+                        <span class="block text-xs text-slate-400">Days Done</span>
+                        <span class="text-sm font-bold text-amber-400" id="statsCompletedDays">0/365</span>
+                    </div>
+                    <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/40">
+                        <span class="block text-xs text-slate-400">Readings</span>
+                        <span class="text-sm font-bold text-emerald-400" id="statsCompletedItems">0</span>
                     </div>
                     <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/40">
                         <span class="block text-xs text-slate-400">Streak</span>
-                        <span class="text-sm font-bold text-emerald-400" id="statsStreak">0 Days</span>
-                    </div>
-                    <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/40">
-                        <span class="block text-xs text-slate-400">Remaining</span>
-                        <span class="text-sm font-bold text-slate-300" id="statsRemaining">365</span>
+                        <span class="text-sm font-bold text-slate-300" id="statsStreak">0 Days</span>
                     </div>
                 </div>
             </div>
@@ -140,21 +139,23 @@
             </div>
         </section>
 
-        <!-- Daily Focus View (Today's Reading) -->
+        <!-- Daily Focus View (Today's Reading & Sub-items) -->
         <section class="bg-gradient-to-b from-slate-900 to-slate-900/90 rounded-2xl p-6 sm:p-8 gold-card-border shadow-2xl relative">
-            <!-- Simulated Date Header Bar -->
             <div class="flex flex-wrap items-center justify-between gap-2 mb-6 pb-4 border-b border-slate-800">
                 <div class="flex items-center gap-2">
                     <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 text-sm font-bold border border-amber-500/20" id="todayDayNumber">
                         1
                     </span>
                     <div>
-                        <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold block">Today's Focus</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold block">Today's Focus</span>
+                            <span id="todayStatusBadge" class="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700">Unread</span>
+                        </div>
                         <h3 class="text-base font-bold text-slate-200" id="todayFormattedDate">January 1, 2027</h3>
                     </div>
                 </div>
 
-                <!-- Date Navigation / Testing Toggle Controls -->
+                <!-- Date Navigation / Controls -->
                 <div class="flex items-center space-x-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-xs">
                     <button id="prevDayBtn" class="px-2.5 py-1 text-slate-300 hover:text-white hover:bg-slate-700/60 rounded-lg transition-colors" title="Previous Day">
                         <i class="fa-solid fa-chevron-left"></i>
@@ -168,22 +169,25 @@
                 </div>
             </div>
 
-            <!-- Passage Content Display Card -->
-            <div class="text-center py-4 sm:py-6">
-                <span class="text-xs font-semibold uppercase tracking-widest text-amber-500/80 mb-2 block">Scripture Reading</span>
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-100 font-serif tracking-tight mb-4 gold-gradient-text" id="todayPassage">
+            <!-- Passage Header -->
+            <div class="text-center py-2 sm:py-4">
+                <span class="text-xs font-semibold uppercase tracking-widest text-amber-500/80 mb-1 block">Assigned Scripture</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-100 font-serif tracking-tight mb-2 gold-gradient-text" id="todayPassageHeader">
                     Genesis 1–3
                 </h2>
-                <p class="text-sm text-slate-400 max-w-md mx-auto italic" id="todaySubtext">
-                    "In the beginning God created the heavens and the earth."
-                </p>
+                <p class="text-xs text-slate-400 font-medium" id="todayProgressText">0 of 3 sub-readings completed</p>
             </div>
 
-            <!-- Completion Toggle Action Button -->
-            <div class="mt-8 flex justify-center">
-                <button id="todayToggleBtn" class="w-full sm:w-auto min-w-[240px] px-8 py-4 rounded-xl font-bold text-base shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-3 bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20">
-                    <i class="fa-regular fa-circle-check text-xl"></i>
-                    <span>Mark as Complete</span>
+            <!-- Individual Sub-readings Checklist -->
+            <div class="mt-6 space-y-2.5 max-w-xl mx-auto" id="todaySubItemsContainer">
+                <!-- Sub-reading items rendered dynamically -->
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button id="todayMarkAllBtn" class="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20">
+                    <i class="fa-solid fa-check-double text-base"></i>
+                    <span>Mark All Chapters Complete</span>
                 </button>
             </div>
         </section>
@@ -192,14 +196,15 @@
         <section class="space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h3 class="text-lg font-bold text-slate-100">2027 Schedule & History</h3>
-                    <p class="text-xs text-slate-400">Search or filter all 365 daily readings</p>
+                    <h3 class="text-lg font-bold text-slate-100">2027 Schedule & Sub-readings</h3>
+                    <p class="text-xs text-slate-400">Search and track chapter breakdowns for each day</p>
                 </div>
 
                 <!-- Status Filter Tabs -->
                 <div class="flex p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-medium self-start sm:self-auto">
                     <button id="filterAll" class="px-3 py-1.5 rounded-lg text-amber-400 bg-slate-800 shadow-sm transition-all filter-tab" data-filter="all">All</button>
-                    <button id="filterPending" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all filter-tab" data-filter="pending">Remaining</button>
+                    <button id="filterPending" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all filter-tab" data-filter="pending">Pending</button>
+                    <button id="filterInProgress" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all filter-tab" data-filter="in_progress">In Progress</button>
                     <button id="filterCompleted" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all filter-tab" data-filter="completed">Completed</button>
                 </div>
             </div>
@@ -207,7 +212,7 @@
             <!-- Search Bar -->
             <div class="relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                <input type="text" id="searchInput" placeholder="Search by book, passage (e.g. Genesis), or day number..." class="w-full bg-slate-900 text-slate-100 placeholder-slate-500 text-sm rounded-xl pl-10 pr-4 py-3 border border-slate-800 focus:outline-none focus:border-amber-500/50 transition-colors">
+                <input type="text" id="searchInput" placeholder="Search by book, chapter (e.g., Genesis 2), or verse range (e.g. Psalm 119)..." class="w-full bg-slate-900 text-slate-100 placeholder-slate-500 text-sm rounded-xl pl-10 pr-4 py-3 border border-slate-800 focus:outline-none focus:border-amber-500/50 transition-colors">
             </div>
 
             <!-- Scrollable Reading List Grid -->
@@ -231,7 +236,7 @@
             </div>
 
             <p class="text-xs text-slate-400 leading-relaxed">
-                You can sync progress directly with your Google Sheet via your Vercel Serverless Function or Google Apps Script Web App. Leave empty to use local storage.
+                Connect your Vercel serverless endpoint or Google Apps Script API to sync individual reading sub-items across your phone and web app.
             </p>
 
             <div class="space-y-4 text-sm">
@@ -268,85 +273,126 @@
     <!-- Main JavaScript Logic -->
     <script>
         /**
-         * 365-Day Bible Reading Plan Sample Data (2027)
-         * Canonical chronology & foundational daily scripture readings.
+         * Generates 365 days of readings with discrete sub-items.
+         * Handles multi-chapter days AND partial psalm verse ranges.
          */
-        const BASE_SCHEDULE_2027 = generateFullYearSchedule();
-
         function generateFullYearSchedule() {
-            // Simplified standard canonical plan structure mapped through 365 days
-            const books = [
-                { name: "Genesis", chapters: 50 }, { name: "Exodus", chapters: 40 },
-                { name: "Leviticus", chapters: 27 }, { name: "Numbers", chapters: 36 },
-                { name: "Deuteronomy", chapters: 34 }, { name: "Joshua", chapters: 24 },
-                { name: "Judges", chapters: 21 }, { name: "Ruth", chapters: 4 },
-                { name: "1 Samuel", chapters: 31 }, { name: "2 Samuel", chapters: 24 },
-                { name: "1 Kings", chapters: 22 }, { name: "2 Kings", chapters: 25 },
-                { name: "Psalms", chapters: 150 }, { name: "Proverbs", chapters: 31 },
-                { name: "Matthew", chapters: 28 }, { name: "Mark", chapters: 16 },
-                { name: "Luke", chapters: 24 }, { name: "John", chapters: 21 },
-                { name: "Acts", chapters: 28 }, { name: "Romans", chapters: 16 },
+            const startDate = new Date(2027, 0, 1); // Jan 1, 2027
+
+            const canonicalBooks = [
+                { name: "Genesis", chapters: 50 },
+                { name: "Exodus", chapters: 40 },
+                { name: "Leviticus", chapters: 27 },
+                { name: "Numbers", chapters: 36 },
+                { name: "Deuteronomy", chapters: 34 },
+                { name: "Joshua", chapters: 24 },
+                { name: "Judges", chapters: 21 },
+                { name: "Ruth", chapters: 4 },
+                { name: "1 Samuel", chapters: 31 },
+                { name: "2 Samuel", chapters: 24 },
+                { name: "1 Kings", chapters: 22 },
+                { name: "2 Kings", chapters: 25 },
+                { name: "Psalms", chapters: 150 },
+                { name: "Proverbs", chapters: 31 },
+                { name: "Matthew", chapters: 28 },
+                { name: "Mark", chapters: 16 },
+                { name: "Luke", chapters: 24 },
+                { name: "John", chapters: 21 },
+                { name: "Acts", chapters: 28 },
+                { name: "Romans", chapters: 16 },
                 { name: "Revelation", chapters: 22 }
             ];
 
             const plan = [];
-            let currentBookIdx = 0;
+            let bookIdx = 0;
             let currentChapter = 1;
-
-            const startDate = new Date(2027, 0, 1); // Jan 1, 2027
 
             for (let day = 1; day <= 365; day++) {
                 const dateObj = new Date(startDate);
                 dateObj.setDate(startDate.getDate() + (day - 1));
-                
                 const isoDate = dateObj.toISOString().split('T')[0];
-                const book = books[currentBookIdx];
-                
-                // Read ~2-4 chapters per day
-                const endChapter = Math.min(currentChapter + 2, book.chapters);
-                let passage = `${book.name} ${currentChapter}`;
-                if (endChapter > currentChapter) {
-                    passage += `–${endChapter}`;
+
+                let dayPassageTitle = "";
+                let subReadings = [];
+
+                // Demonstrate partial chapter verse ranges specifically on certain psalm days
+                if (day === 100) {
+                    dayPassageTitle = "Psalm 119:1–60";
+                    subReadings = [
+                        { id: `day-100-sub-1`, label: "Psalm 119:1–20", done: false },
+                        { id: `day-100-sub-2`, label: "Psalm 119:21–40", done: false },
+                        { id: `day-100-sub-3`, label: "Psalm 119:41–60", done: false }
+                    ];
+                } else if (day === 101) {
+                    dayPassageTitle = "Psalm 119:61–120";
+                    subReadings = [
+                        { id: `day-101-sub-1`, label: "Psalm 119:61–90", done: false },
+                        { id: `day-101-sub-2`, label: "Psalm 119:91–120", done: false }
+                    ];
+                } else {
+                    // Standard multi-chapter or single chapter daily assignments
+                    const currentBook = canonicalBooks[bookIdx];
+                    // Read 2-3 chapters per day
+                    const numChaptersToday = (day % 3 === 0) ? 3 : 2;
+                    const endChapter = Math.min(currentChapter + numChaptersToday - 1, currentBook.chapters);
+
+                    if (currentChapter === endChapter) {
+                        dayPassageTitle = `${currentBook.name} ${currentChapter}`;
+                    } else {
+                        dayPassageTitle = `${currentBook.name} ${currentChapter}–${endChapter}`;
+                    }
+
+                    for (let c = currentChapter; c <= endChapter; c++) {
+                        subReadings.push({
+                            id: `day-${day}-ch-${c}`,
+                            label: `${currentBook.name} ${c}`,
+                            done: false
+                        });
+                    }
+
+                    currentChapter = endChapter + 1;
+                    if (currentChapter > currentBook.chapters) {
+                        bookIdx = (bookIdx + 1) % canonicalBooks.length;
+                        currentChapter = 1;
+                    }
                 }
 
                 plan.push({
                     day: day,
                     date: isoDate,
-                    passage: passage,
-                    completed: false
+                    passage: dayPassageTitle,
+                    items: subReadings
                 });
-
-                currentChapter = endChapter + 1;
-                if (currentChapter > book.chapters) {
-                    currentBookIdx = (currentBookIdx + 1) % books.length;
-                    currentChapter = 1;
-                }
             }
+
             return plan;
         }
 
-        // App State Variables
-        let scheduleData = [];
-        let currentFocusIndex = 0; // Index in scheduleData currently viewing
-        let activeFilter = 'all';
-        let userConfig = {
-            apiUrl: '',
-            secretKey: ''
-        };
+        const BASE_SCHEDULE_2027 = generateFullYearSchedule();
 
-        // DOM Element Selectors
+        // App State
+        let scheduleData = [];
+        let currentFocusIndex = 0;
+        let activeFilter = 'all';
+        let userConfig = { apiUrl: '', secretKey: '' };
+
+        // DOM Elements
         const todayDayNumber = document.getElementById('todayDayNumber');
         const todayFormattedDate = document.getElementById('todayFormattedDate');
-        const todayPassage = document.getElementById('todayPassage');
-        const todayToggleBtn = document.getElementById('todayToggleBtn');
+        const todayPassageHeader = document.getElementById('todayPassageHeader');
+        const todayProgressText = document.getElementById('todayProgressText');
+        const todayStatusBadge = document.getElementById('todayStatusBadge');
+        const todaySubItemsContainer = document.getElementById('todaySubItemsContainer');
+        const todayMarkAllBtn = document.getElementById('todayMarkAllBtn');
+
         const prevDayBtn = document.getElementById('prevDayBtn');
         const nextDayBtn = document.getElementById('nextDayBtn');
         const todayResetBtn = document.getElementById('todayResetBtn');
-        
+
         const statsPercentage = document.getElementById('statsPercentage');
-        const statsCompleted = document.getElementById('statsCompleted');
+        const statsCompletedDays = document.getElementById('statsCompletedDays');
+        const statsCompletedItems = document.getElementById('statsCompletedItems');
         const statsStreak = document.getElementById('statsStreak');
-        const statsRemaining = document.getElementById('statsRemaining');
         const progressBar = document.getElementById('progressBar');
 
         const scheduleGrid = document.getElementById('scheduleGrid');
@@ -364,14 +410,12 @@
         const syncStatusText = document.getElementById('syncStatusText');
         const syncDot = document.getElementById('syncDot');
 
-        // Initialization
+        // Lifecycle Init
         window.addEventListener('DOMContentLoaded', () => {
             loadConfig();
             loadScheduleData();
             setFocusToDate(new Date());
             renderApp();
-            
-            // Register Listeners
             setupEventListeners();
         });
 
@@ -388,7 +432,7 @@
         }
 
         function loadScheduleData() {
-            const localSaved = localStorage.getItem('bible2027_data');
+            const localSaved = localStorage.getItem('bible2027_sub_data');
             if (localSaved) {
                 try {
                     scheduleData = JSON.parse(localSaved);
@@ -399,28 +443,28 @@
                 scheduleData = [...BASE_SCHEDULE_2027];
             }
 
-            // Sync with backend asynchronously if API endpoint is set
             if (userConfig.apiUrl) {
                 fetchBackendData();
             }
         }
 
         function saveScheduleData() {
-            localStorage.setItem('bible2027_data', JSON.stringify(scheduleData));
+            localStorage.setItem('bible2027_sub_data', JSON.stringify(scheduleData));
             renderApp();
         }
 
         function setFocusToDate(date) {
-            // Match ISO YYYY-MM-DD
             const iso = date.toISOString().split('T')[0];
             const foundIdx = scheduleData.findIndex(item => item.date === iso);
-            
-            if (foundIdx !== -1) {
-                currentFocusIndex = foundIdx;
-            } else {
-                // If current date outside 2027, default to Day 1 (Jan 1, 2027)
-                currentFocusIndex = 0;
-            }
+            currentFocusIndex = (foundIdx !== -1) ? foundIdx : 0;
+        }
+
+        function getDayStatus(dayObj) {
+            const total = dayObj.items.length;
+            const done = dayObj.items.filter(i => i.done).length;
+            if (done === 0) return 'unread';
+            if (done === total) return 'completed';
+            return 'in_progress';
         }
 
         function renderApp() {
@@ -429,14 +473,14 @@
             renderScheduleList();
         }
 
-        // Render Daily Focus Section
+        // Render Focus Daily Card
         function renderTodayFocus() {
-            const item = scheduleData[currentFocusIndex];
-            if (!item) return;
+            const dayObj = scheduleData[currentFocusIndex];
+            if (!dayObj) return;
 
-            todayDayNumber.textContent = item.day;
+            todayDayNumber.textContent = dayObj.day;
             
-            const dateObj = new Date(item.date + 'T00:00:00');
+            const dateObj = new Date(dayObj.date + 'T00:00:00');
             todayFormattedDate.textContent = dateObj.toLocaleDateString('en-US', {
                 weekday: 'long',
                 month: 'long',
@@ -444,58 +488,117 @@
                 year: 'numeric'
             });
 
-            todayPassage.textContent = item.passage;
+            todayPassageHeader.textContent = dayObj.passage;
 
-            // Button styling based on completion
-            if (item.completed) {
-                todayToggleBtn.className = "w-full sm:w-auto min-w-[240px] px-8 py-4 rounded-xl font-bold text-base shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-3 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30";
-                todayToggleBtn.innerHTML = `<i class="fa-solid fa-circle-check text-xl"></i> <span>Completed</span>`;
+            const totalItems = dayObj.items.length;
+            const completedItems = dayObj.items.filter(i => i.done).length;
+            const status = getDayStatus(dayObj);
+
+            todayProgressText.textContent = `${completedItems} of ${totalItems} sub-readings completed`;
+
+            // Update badge
+            if (status === 'completed') {
+                todayStatusBadge.className = "text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                todayStatusBadge.textContent = "Completed";
+            } else if (status === 'in_progress') {
+                todayStatusBadge.className = "text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                todayStatusBadge.textContent = "In Progress";
             } else {
-                todayToggleBtn.className = "w-full sm:w-auto min-w-[240px] px-8 py-4 rounded-xl font-bold text-base shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-3 bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20";
-                todayToggleBtn.innerHTML = `<i class="fa-regular fa-circle-check text-xl"></i> <span>Mark as Completed</span>`;
+                todayStatusBadge.className = "text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700";
+                todayStatusBadge.textContent = "Unread";
+            }
+
+            // Render sub-items list
+            todaySubItemsContainer.innerHTML = '';
+            dayObj.items.forEach(subItem => {
+                const itemRow = document.createElement('div');
+                itemRow.className = `p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+                    subItem.done 
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' 
+                        : 'bg-slate-800/80 border-slate-700/60 hover:border-slate-600 text-slate-200'
+                }`;
+
+                itemRow.onclick = () => toggleSubItem(dayObj.day, subItem.id);
+
+                itemRow.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                            subItem.done 
+                                ? 'bg-emerald-500 border-emerald-400 text-slate-950' 
+                                : 'border-slate-500 bg-slate-900'
+                        }">
+                            ${subItem.done ? '<i class="fa-solid fa-check text-xs font-bold"></i>' : ''}
+                        </div>
+                        <span class="text-sm font-semibold ${subItem.done ? 'line-through text-slate-400' : ''}">
+                            ${subItem.label}
+                        </span>
+                    </div>
+                    ${subItem.done ? '<span class="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Read</span>' : ''}
+                `;
+                todaySubItemsContainer.appendChild(itemRow);
+            });
+
+            // Update Mark All Button
+            if (status === 'completed') {
+                todayMarkAllBtn.className = "w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30";
+                todayMarkAllBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> <span>Uncheck All Items</span>`;
+            } else {
+                todayMarkAllBtn.className = "w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20";
+                todayMarkAllBtn.innerHTML = `<i class="fa-solid fa-check-double text-base"></i> <span>Mark All Chapters Complete</span>`;
             }
         }
 
-        // Render Progress Statistics
+        // Render Stats Overview
         function renderStats() {
-            const total = scheduleData.length;
-            const completedCount = scheduleData.filter(d => d.completed).length;
-            const remainingCount = total - completedCount;
-            const percentage = Math.round((completedCount / total) * 100);
+            let totalItems = 0;
+            let completedItems = 0;
+            let completedDays = 0;
 
-            statsCompleted.textContent = completedCount;
-            statsRemaining.textContent = remainingCount;
-            statsPercentage.innerHTML = `${percentage}% <span class="text-xs font-normal text-slate-400">Completed</span>`;
+            scheduleData.forEach(day => {
+                const dayDone = day.items.filter(i => i.done).length;
+                totalItems += day.items.length;
+                completedItems += dayDone;
+                if (dayDone === day.items.length && day.items.length > 0) {
+                    completedDays++;
+                }
+            });
+
+            const percentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+            statsCompletedDays.textContent = `${completedDays}/365`;
+            statsCompletedItems.textContent = `${completedItems}/${totalItems}`;
+            statsPercentage.innerHTML = `${percentage}% <span class="text-xs font-normal text-slate-400">Total Read</span>`;
             progressBar.style.width = `${percentage}%`;
 
             // Calculate current streak
             let streak = 0;
             for (let i = 0; i < scheduleData.length; i++) {
-                if (scheduleData[i].completed) {
+                const status = getDayStatus(scheduleData[i]);
+                if (status === 'completed') {
                     streak++;
-                } else {
-                    if (i <= currentFocusIndex) streak = 0;
+                } else if (i <= currentFocusIndex) {
+                    streak = 0;
                 }
             }
             statsStreak.textContent = `${streak} Days`;
         }
 
-        // Render Schedule List Grid with Search & Filters
+        // Render Schedule Grid
         function renderScheduleList() {
             const query = searchInput.value.toLowerCase().trim();
             scheduleGrid.innerHTML = '';
 
-            const filtered = scheduleData.filter(item => {
-                // Filter status
-                if (activeFilter === 'pending' && item.completed) return false;
-                if (activeFilter === 'completed' && !item.completed) return false;
+            const filtered = scheduleData.filter(dayObj => {
+                const status = getDayStatus(dayObj);
+                if (activeFilter === 'pending' && status !== 'unread') return false;
+                if (activeFilter === 'in_progress' && status !== 'in_progress') return false;
+                if (activeFilter === 'completed' && status !== 'completed') return false;
 
-                // Search query
                 if (query) {
-                    const matchPassage = item.passage.toLowerCase().includes(query);
-                    const matchDay = item.day.toString() === query;
-                    const matchDate = item.date.includes(query);
-                    return matchPassage || matchDay || matchDate;
+                    const matchPassage = dayObj.passage.toLowerCase().includes(query);
+                    const matchDay = dayObj.day.toString() === query;
+                    const matchSubItems = dayObj.items.some(i => i.label.toLowerCase().includes(query));
+                    return matchPassage || matchDay || matchSubItems;
                 }
                 return true;
             });
@@ -509,58 +612,79 @@
                 return;
             }
 
-            filtered.forEach(item => {
-                const isCurrent = (scheduleData[currentFocusIndex].day === item.day);
+            filtered.forEach(dayObj => {
+                const isCurrent = (scheduleData[currentFocusIndex].day === dayObj.day);
+                const status = getDayStatus(dayObj);
+                const totalItems = dayObj.items.length;
+                const doneItems = dayObj.items.filter(i => i.done).length;
+
                 const card = document.createElement('div');
-                card.className = `p-4 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                card.className = `p-4 rounded-xl border transition-all space-y-3 ${
                     isCurrent 
                         ? 'bg-slate-800/90 border-amber-500/50 shadow-md' 
                         : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'
                 }`;
 
                 card.innerHTML = `
-                    <div class="flex items-center gap-3 min-w-0 cursor-pointer flex-1" onclick="jumpToDay(${item.day})">
-                        <span class="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 ${
-                            item.completed 
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                                : 'bg-slate-800 text-slate-400 border border-slate-700/60'
-                        }">
-                            ${item.day}
-                        </span>
-                        <div class="truncate">
-                            <h4 class="text-xs font-bold text-slate-200 truncate ${item.completed ? 'line-through text-slate-400' : ''}">
-                                ${item.passage}
-                            </h4>
-                            <p class="text-[10px] text-slate-500">${item.date}</p>
+                    <div class="flex items-center justify-between gap-2 cursor-pointer" onclick="jumpToDay(${dayObj.day})">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 ${
+                                status === 'completed'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                    : status === 'in_progress'
+                                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                    : 'bg-slate-800 text-slate-400 border border-slate-700/60'
+                            }">
+                                ${dayObj.day}
+                            </span>
+                            <div class="truncate">
+                                <h4 class="text-xs font-bold text-slate-200 truncate ${status === 'completed' ? 'line-through text-slate-400' : ''}">
+                                    ${dayObj.passage}
+                                </h4>
+                                <p class="text-[10px] text-slate-500">${dayObj.date}</p>
+                            </div>
                         </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                            status === 'completed'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : status === 'in_progress'
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                : 'bg-slate-800 text-slate-400'
+                        }">
+                            ${doneItems}/${totalItems}
+                        </span>
                     </div>
-                    <button onclick="toggleDayCompletion(${item.day})" class="shrink-0 text-base p-1.5 rounded-lg transition-colors ${
-                        item.completed 
-                            ? 'text-emerald-400 hover:text-emerald-300' 
-                            : 'text-slate-600 hover:text-amber-400'
-                    }">
-                        <i class="${item.completed ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'}"></i>
-                    </button>
+
+                    <!-- Compact sub-items list -->
+                    <div class="space-y-1 pt-1 border-t border-slate-800/60">
+                        ${dayObj.items.map(subItem => `
+                            <div class="flex items-center justify-between text-xs py-0.5 px-1 hover:bg-slate-800/40 rounded transition-colors" onclick="toggleSubItem(${dayObj.day}, '${subItem.id}')">
+                                <span class="${subItem.done ? 'line-through text-slate-500' : 'text-slate-300'} text-[11px]">
+                                    ${subItem.label}
+                                </span>
+                                <i class="${subItem.done ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-regular fa-circle text-slate-600'} text-xs"></i>
+                            </div>
+                        `).join('')}
+                    </div>
                 `;
                 scheduleGrid.appendChild(card);
             });
         }
 
-        // Actions & Logic
-        function toggleTodayCompletion() {
-            const currentItem = scheduleData[currentFocusIndex];
-            toggleDayCompletion(currentItem.day);
-        }
+        // State Mutations
+        function toggleSubItem(dayNum, subItemId) {
+            const dayIdx = scheduleData.findIndex(d => d.day === dayNum);
+            if (dayIdx === -1) return;
 
-        function toggleDayCompletion(dayNum) {
-            const idx = scheduleData.findIndex(item => item.day === dayNum);
-            if (idx === -1) return;
+            const dayObj = scheduleData[dayIdx];
+            const subIdx = dayObj.items.findIndex(i => i.id === subItemId);
+            if (subIdx === -1) return;
 
-            const isCompleting = !scheduleData[idx].completed;
-            scheduleData[idx].completed = isCompleting;
+            dayObj.items[subIdx].done = !dayObj.items[subIdx].done;
 
-            // Trigger Confetti Effect on completion
-            if (isCompleting && typeof confetti === 'function') {
+            // Check if day became fully completed
+            const allDone = dayObj.items.every(i => i.done);
+            if (allDone && typeof confetti === 'function') {
                 confetti({
                     particleCount: 50,
                     spread: 60,
@@ -570,11 +694,36 @@
             }
 
             saveScheduleData();
-            showToast(isCompleting ? `Day ${dayNum} marked complete!` : `Day ${dayNum} marked pending`);
+            showToast(`${dayObj.items[subIdx].label} updated`);
 
-            // Sync update to Remote API if Configured
             if (userConfig.apiUrl) {
-                syncCompletionToBackend(scheduleData[idx]);
+                syncDayToBackend(dayObj);
+            }
+        }
+
+        function toggleAllDayItems() {
+            const dayObj = scheduleData[currentFocusIndex];
+            if (!dayObj) return;
+
+            const currentStatus = getDayStatus(dayObj);
+            const targetState = (currentStatus !== 'completed'); // If completed, toggle to false, else to true
+
+            dayObj.items.forEach(i => i.done = targetState);
+
+            if (targetState && typeof confetti === 'function') {
+                confetti({
+                    particleCount: 60,
+                    spread: 70,
+                    origin: { y: 0.7 },
+                    colors: ['#f59e0b', '#10b981', '#fbbf24']
+                });
+            }
+
+            saveScheduleData();
+            showToast(targetState ? `Day ${dayObj.day} completed!` : `Day ${dayObj.day} reset to unread`);
+
+            if (userConfig.apiUrl) {
+                syncDayToBackend(dayObj);
             }
         }
 
@@ -587,7 +736,7 @@
             }
         }
 
-        // Sync API Interactions
+        // Sync API Handling
         async function fetchBackendData() {
             try {
                 updateSyncBadge('syncing');
@@ -610,7 +759,7 @@
             }
         }
 
-        async function syncCompletionToBackend(item) {
+        async function syncDayToBackend(dayObj) {
             if (!userConfig.apiUrl) return;
             try {
                 updateSyncBadge('syncing');
@@ -620,11 +769,7 @@
                         'Content-Type': 'application/json',
                         'x-secret-key': userConfig.secretKey 
                     },
-                    body: JSON.stringify({
-                        day: item.day,
-                        date: item.date,
-                        completed: item.completed
-                    })
+                    body: JSON.stringify(dayObj)
                 });
                 if (response.ok) {
                     updateSyncBadge('online');
@@ -667,12 +812,12 @@
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
                 toast.classList.remove('opacity-100', 'translate-y-0');
-            }, 3000);
+            }, 2500);
         }
 
-        // Listeners & Navigation Controls
+        // Listeners
         function setupEventListeners() {
-            todayToggleBtn.addEventListener('click', toggleTodayCompletion);
+            todayMarkAllBtn.addEventListener('click', toggleAllDayItems);
 
             prevDayBtn.addEventListener('click', () => {
                 if (currentFocusIndex > 0) {
@@ -708,10 +853,10 @@
                 });
             });
 
-            // Search
+            // Search input
             searchInput.addEventListener('input', renderScheduleList);
 
-            // Settings Modal Modal Toggles
+            // Modal controls
             openSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
             closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
 
@@ -730,7 +875,7 @@
             });
 
             resetDataBtn.addEventListener('click', () => {
-                if (confirm("Reset all local completion status for 2027?")) {
+                if (confirm("Reset all local sub-reading completion status for 2027?")) {
                     scheduleData = [...BASE_SCHEDULE_2027];
                     saveScheduleData();
                     settingsModal.classList.add('hidden');
