@@ -170,7 +170,7 @@
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-slate-100 flex items-center space-x-2">
           <i data-lucide="database" class="w-5 h-5 text-amber-400"></i>
-          <span>Sync & Settings</span>
+          <span>Google Sheets CSV Feed</span>
         </h3>
         <button id="close-settings-btn" class="text-slate-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -179,99 +179,122 @@
 
       <div class="space-y-3 text-xs text-slate-300">
         <div>
-          <label class="block font-medium mb-1 text-slate-400">Vercel API / Google Apps Script URL</label>
-          <input type="text" id="api-url-input" placeholder="https://your-vercel-app.vercel.app/api/readings" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 text-xs">
-        </div>
-        <div>
-          <label class="block font-medium mb-1 text-slate-400">Secret Auth Passcode</label>
-          <input type="password" id="api-key-input" placeholder="Enter your secret passcode" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 text-xs">
+          <label class="block font-medium mb-1 text-slate-400">Published Google Sheet CSV URL</label>
+          <input type="text" id="csv-url-input" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 text-xs">
+          <p class="text-[11px] text-slate-500 mt-1">In Google Sheets: File > Share > Publish to web > CSV format.</p>
         </div>
       </div>
 
       <div class="pt-2 flex space-x-2">
         <button id="save-settings-btn" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-colors">
-          Save Settings
+          Save & Load Schedule
         </button>
       </div>
     </div>
   </div>
 
   <script>
-    // --- Mock 2027 Schedule Generator ---
-    const BOOKS_OT = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "Psalms", "Proverbs", "Isaiah"];
-    const BOOKS_NT = ["Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians"];
-
-    function generateFullYearSchedule() {
-      const schedule = [];
-      let currentDate = new Date(2027, 0, 1);
-      
-      for (let dayNum = 1; dayNum <= 365; dayNum++) {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        
-        let otBook = BOOKS_OT[(dayNum - 1) % BOOKS_OT.length];
-        let ntBook = BOOKS_NT[(dayNum - 1) % BOOKS_NT.length];
-        
-        let ch1 = ((dayNum * 2) - 1);
-        let ch2 = (dayNum * 2);
-
-        let items = [];
-        if (dayNum % 7 === 0) {
-          // Special single psalm passage day
-          items = [
-            { id: `d${dayNum}_1`, label: `Psalm 119:${(dayNum % 5) * 20 + 1}-${(dayNum % 5) * 20 + 20}`, done: false }
-          ];
-        } else {
-          // Multi-chapter day
-          items = [
-            { id: `d${dayNum}_1`, label: `${otBook} ${ch1 % 25 + 1}`, done: false },
-            { id: `d${dayNum}_2`, label: `${otBook} ${(ch1 % 25) + 2}`, done: false },
-            { id: `d${dayNum}_3`, label: `${ntBook} ${ch2 % 15 + 1}`, done: false }
-          ];
-        }
-
-        schedule.push({
-          day: dayNum,
-          date: dateStr,
-          items: items
-        });
-
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      return schedule;
-    }
-
     // --- State Management ---
     let scheduleData = [];
     let activeDateStr = "2027-01-01";
     let calendarViewYear = 2027;
     let calendarViewMonth = 0; // 0 = Jan
+    let sheetCsvUrl = localStorage.getItem("bible_2027_csv_url") || "";
 
     const MONTH_NAMES = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
     ];
 
-    // Initialize Application
-    function initApp() {
-      // Load saved state or default
-      const savedSchedule = localStorage.getItem("bible_2027_schedule");
-      if (savedSchedule) {
-        try {
-          scheduleData = JSON.parse(savedSchedule);
-        } catch (e) {
-          scheduleData = generateFullYearSchedule();
+    // --- Mock Fallback Schedule Generator ---
+    function generateFallbackSchedule() {
+      const schedule = [];
+      let currentDate = new Date(2027, 0, 1);
+      
+      for (let dayNum = 1; dayNum <= 365; dayNum++) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        schedule.push({
+          day: dayNum,
+          date: dateStr,
+          items: [
+            { id: `d${dayNum}_1`, label: `Day ${dayNum} Passage 1`, done: false },
+            { id: `d${dayNum}_2`, label: `Day ${dayNum} Passage 2`, done: false }
+          ]
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      return schedule;
+    }
+
+    // --- Fetch Schedule from Published Google Sheets CSV ---
+    async function fetchScheduleFromCSV(url) {
+      try {
+        const response = await fetch(url);
+        const csvText = await response.text();
+        
+        const lines = csvText.trim().split(/\r?\n/);
+        const savedCompletions = JSON.parse(localStorage.getItem("bible_2027_completions") || "{}");
+
+        const schedule = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          
+          // Parse CSV columns: Day, Date, Passage
+          const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+          
+          const dayNum = parseInt(cols[0], 10) || i;
+          const dateStr = cols[1] || "";
+          const rawPassage = cols[2] || "";
+
+          // Splits multiple chapters or ranges (e.g. Genesis 1 & 2) into individual checkboxes
+          const passageParts = rawPassage.split(/&|,/).map(p => p.trim());
+          
+          const items = passageParts.map((part, pIdx) => {
+            const itemId = `d${dayNum}_p${pIdx + 1}`;
+            return {
+              id: itemId,
+              label: part,
+              done: !!savedCompletions[itemId]
+            };
+          });
+
+          schedule.push({
+            day: dayNum,
+            date: dateStr,
+            items: items
+          });
+        }
+
+        return schedule;
+      } catch (err) {
+        console.error("Failed to fetch Google Sheets CSV:", err);
+        return null;
+      }
+    }
+
+    // --- App Initialization ---
+    async function initApp() {
+      document.getElementById("csv-url-input").value = sheetCsvUrl;
+
+      if (sheetCsvUrl) {
+        const fetchedSchedule = await fetchScheduleFromCSV(sheetCsvUrl);
+        if (fetchedSchedule && fetchedSchedule.length > 0) {
+          scheduleData = fetchedSchedule;
+        } else {
+          scheduleData = generateFallbackSchedule();
         }
       } else {
-        scheduleData = generateFullYearSchedule();
+        scheduleData = generateFallbackSchedule();
       }
 
-      // Set default active date to today or 2027-01-01
+      // Default active date setup
       const todayISO = new Date().toISOString().split('T')[0];
       if (scheduleData.some(d => d.date === todayISO)) {
         activeDateStr = todayISO;
         calendarViewMonth = new Date().getMonth();
       } else {
-        activeDateStr = "2027-01-01";
+        activeDateStr = scheduleData[0]?.date || "2027-01-01";
         calendarViewMonth = 0;
       }
 
@@ -282,11 +305,18 @@
     }
 
     function saveState() {
-      localStorage.setItem("bible_2027_schedule", JSON.stringify(scheduleData));
+      // Save completions map locally
+      const completions = {};
+      scheduleData.forEach(day => {
+        day.items.forEach(item => {
+          if (item.done) completions[item.id] = true;
+        });
+      });
+
+      localStorage.setItem("bible_2027_completions", JSON.stringify(completions));
       renderAll();
     }
 
-    // Populate Month Select Dropdown
     function populateMonthDropdown() {
       const select = document.getElementById("month-select");
       select.innerHTML = "";
@@ -299,7 +329,7 @@
       });
     }
 
-    // --- Rendering Logic ---
+    // --- Rendering Functions ---
     function renderAll() {
       renderProgressStats();
       renderFocusCard();
@@ -307,7 +337,6 @@
       lucide.createIcons();
     }
 
-    // Progress Stats Bar
     function renderProgressStats() {
       let totalItems = 0;
       let completedItems = 0;
@@ -329,29 +358,17 @@
       document.getElementById("progress-bar-fill").style.width = `${percent}%`;
       document.getElementById("completed-days-count").textContent = completedDays;
       document.getElementById("remaining-days-count").textContent = 365 - completedDays;
-      document.getElementById("streak-count").textContent = calculateStreak();
+      document.getElementById("streak-count").textContent = completedDays;
     }
 
-    function calculateStreak() {
-      let streak = 0;
-      for (let day of scheduleData) {
-        const allDone = day.items.length > 0 && day.items.every(i => i.done);
-        if (allDone) {
-          streak++;
-        } else if (day.date <= activeDateStr) {
-          // Break streak if an earlier date is incomplete
-          // (Simplified streak count)
-        }
-      }
-      return streak;
-    }
-
-    // Focus Card Render
     function renderFocusCard() {
       const dayData = scheduleData.find(d => d.date === activeDateStr) || scheduleData[0];
-      
+      if (!dayData) return;
+
       const dateObj = new Date(dayData.date + "T00:00:00");
-      const dateFormatted = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', weekday: 'short' });
+      const dateFormatted = isNaN(dateObj) 
+        ? dayData.date 
+        : dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', weekday: 'short' });
 
       document.getElementById("focus-date-str").textContent = dateFormatted;
       document.getElementById("focus-label").textContent = `Day ${dayData.day} Reading`;
@@ -359,9 +376,9 @@
       const listContainer = document.getElementById("focus-items-list");
       listContainer.innerHTML = "";
 
-      const allDone = dayData.items.every(i => i.done);
+      const allDone = dayData.items.length > 0 && dayData.items.every(i => i.done);
 
-      dayData.items.forEach((item, index) => {
+      dayData.items.forEach((item) => {
         const itemEl = document.createElement("div");
         itemEl.className = `flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
           item.done 
@@ -391,7 +408,6 @@
         listContainer.appendChild(itemEl);
       });
 
-      // Master button state
       const masterBtn = document.getElementById("toggle-all-btn");
       const masterText = document.getElementById("toggle-all-text");
 
@@ -404,7 +420,6 @@
       }
     }
 
-    // Monthly Calendar Grid Render
     function renderCalendar() {
       const grid = document.getElementById("calendar-grid");
       grid.innerHTML = "";
@@ -415,14 +430,12 @@
       const firstDay = new Date(calendarViewYear, calendarViewMonth, 1).getDay();
       const daysInMonth = new Date(calendarViewYear, calendarViewMonth + 1, 0).getDate();
 
-      // Empty padding cells before 1st of month
       for (let i = 0; i < firstDay; i++) {
         const emptyCell = document.createElement("div");
         emptyCell.className = "min-h-[80px] bg-slate-950/40 border border-slate-800/40 rounded-xl p-1 opacity-30";
         grid.appendChild(emptyCell);
       }
 
-      // Render days of the month
       for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
         const monthStr = String(calendarViewMonth + 1).padStart(2, '0');
         const dayStr = String(dayNum).padStart(2, '0');
@@ -443,7 +456,6 @@
           isFullyComplete = totalCount > 0 && doneCount === totalCount;
         }
 
-        // Cell border/bg classes based on state
         let statusStyles = "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700";
         if (isSelected) {
           statusStyles = "bg-slate-800 border-amber-500 ring-2 ring-amber-500/30 text-amber-300";
@@ -455,16 +467,14 @@
 
         cell.className = `min-h-[80px] border rounded-xl p-1.5 flex flex-col justify-between transition-all cursor-pointer ${statusStyles}`;
 
-        // Sub-items summary pills
         let itemsHTML = '';
         if (dayData) {
           dayData.items.forEach(item => {
-            const shortLabel = item.label.replace(/Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|Psalms|Proverbs|Isaiah|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians/g, match => match.substring(0, 3));
             itemsHTML += `
               <div class="text-[10px] leading-tight px-1 py-0.5 rounded ${
                 item.done ? 'bg-amber-500/20 text-amber-300 font-semibold line-through' : 'bg-slate-800 text-slate-400'
               } truncate">
-                ${shortLabel}
+                ${item.label}
               </div>
             `;
           });
@@ -496,9 +506,8 @@
       }
     }
 
-    // Event Listeners
+    // --- Event Listeners ---
     function setupEventListeners() {
-      // Focus Card Navigation
       document.getElementById("prev-day-btn").addEventListener("click", () => {
         const idx = scheduleData.findIndex(d => d.date === activeDateStr);
         if (idx > 0) {
@@ -518,12 +527,12 @@
       });
 
       document.getElementById("today-btn").addEventListener("click", () => {
-        activeDateStr = "2027-01-01";
-        calendarViewMonth = 0;
+        const todayISO = new Date().toISOString().split('T')[0];
+        activeDateStr = scheduleData.some(d => d.date === todayISO) ? todayISO : scheduleData[0].date;
+        calendarViewMonth = new Date(activeDateStr + "T00:00:00").getMonth();
         renderAll();
       });
 
-      // Master Toggle All Button
       document.getElementById("toggle-all-btn").addEventListener("click", () => {
         const dayData = scheduleData.find(d => d.date === activeDateStr);
         if (dayData) {
@@ -534,7 +543,6 @@
         }
       });
 
-      // Calendar Navigation
       document.getElementById("cal-prev-month").addEventListener("click", () => {
         if (calendarViewMonth > 0) {
           calendarViewMonth--;
@@ -570,7 +578,14 @@
       const modal = document.getElementById("settings-modal");
       document.getElementById("open-settings-btn").addEventListener("click", () => modal.classList.remove("hidden"));
       document.getElementById("close-settings-btn").addEventListener("click", () => modal.classList.add("hidden"));
-      document.getElementById("save-settings-btn").addEventListener("click", () => modal.classList.add("hidden"));
+      
+      document.getElementById("save-settings-btn").addEventListener("click", async () => {
+        const urlInput = document.getElementById("csv-url-input").value.trim();
+        localStorage.setItem("bible_2027_csv_url", urlInput);
+        sheetCsvUrl = urlInput;
+        modal.classList.add("hidden");
+        await initApp();
+      });
     }
 
     // Start App
